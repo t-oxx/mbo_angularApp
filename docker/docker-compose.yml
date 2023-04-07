@@ -1,0 +1,14 @@
+version: '3'
+services:
+  web:
+    container_name: angular-app
+    build:
+      context: ./
+      dockerfile: dockerfile
+    ports:
+      - 4200:4200
+    volumes:
+      - ../angular-app:/app
+    stdin_open: true
+    tty: true
+    restart: always
