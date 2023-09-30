@@ -1,10 +1,12 @@
 import { InjectionToken } from '@angular/core';
-import { HttpRequest, HttpResponse, HttpXsrfTokenExtractor } from '@angular/common/http';
-import { Inject, Injectable, OnInit, PLATFORM_ID } from '@angular/core';
+import { HttpXsrfTokenExtractor } from '@angular/common/http';
+import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {DOCUMENT, ɵparseCookieValue as parseCookieValue} from '@angular/common';
-import { ColdObservable } from 'rxjs/internal/testing/ColdObservable';
 
+/**
+ * XSRF CookieName
+ */
 export const XSRF_COOKIE_NAME: InjectionToken<string> = new InjectionToken<string>('XSRF-TOKEN');
 
 @Injectable()
@@ -13,11 +15,6 @@ export const XSRF_COOKIE_NAME: InjectionToken<string> = new InjectionToken<strin
  * XsrfTokenService
  */
 export class XsrfTokenService implements HttpXsrfTokenExtractor {
-
-  private lastCookieString: any;
-  private lastToken: any = null;
-  private parseCount: number = 0;
-  private MAX_RETRIES: number = 5;
 
   /**
    * constructor
@@ -36,31 +33,17 @@ export class XsrfTokenService implements HttpXsrfTokenExtractor {
       {}
 
   /**
-   * tokenRequest
-   * @returns XSRFToken
-   */
-  tokenRequest(): Promise<any> {
-    let promise = new Promise((resolve, reject) => { 
-        this.httpClient.get(this.baseUrl + 'token', {observe: 'response'}).subscribe(response => {
-        });
-    });
-
-    return promise;
-  }
-
-  /**
    * getToken
    * @returns XSRFToken
    */
   getToken(): string|null {
-    // 簡易
-    const cookie = document.cookie.split('=');
-    if (cookie && cookie.length > 1)
+    const token = this.getCookieValueByKey(this.cookieName);
+    if (token === '')
     {
-      return  document.cookie.split('=')[1];
+      return null;
     }
 
-    return null;
+    return token;
   }
 
   /**
@@ -69,4 +52,28 @@ export class XsrfTokenService implements HttpXsrfTokenExtractor {
   init(): void {
     this.tokenRequest();
   }
+
+  /**
+   * tokenRequest
+   * @returns XSRFToken
+   */
+  private tokenRequest(): void {
+    this.httpClient.get(this.baseUrl + 'token', {observe: 'response'});
+  }
+
+  /**
+   * getCookieValueByKey
+   * @param key 
+   * @returns targetcookieValue
+   */
+  private getCookieValueByKey(key: string): string {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        var cookiesArray = cookie.split('='); 
+        if (cookiesArray[0].trim() == key.trim()) { 
+            return cookiesArray[1];
+        }
+    }
+    return '';
+  }  
 }
